@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NEXUS Mock App-Chain | Galactic Raiders</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#e74040",
+                        "background-light": "#f8f6f6",
+                        "background-dark": "#120808",
+                        "neutral-800": "#2a1a1a",
+                        "neutral-900": "#1c1212",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .cyber-border {
+            border-left: 4px solid #e74040;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen font-display">
+<div class="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+<header class="flex items-center justify-between border-b border-primary/20 px-6 py-4 lg:px-20 bg-background-light dark:bg-background-dark sticky top-0 z-50">
+<div class="flex items-center gap-4">
+<div class="text-primary">
+<span class="material-symbols-outlined text-4xl">rocket_launch</span>
+</div>
+<div class="flex flex-col">
+<h2 class="text-slate-900 dark:text-slate-100 text-lg font-black leading-tight tracking-tight uppercase">Galactic Raiders</h2>
+<span class="text-primary text-[10px] font-bold tracking-[0.2em] uppercase">Web3 Infrastructure</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="hidden md:flex items-center gap-6 mr-6">
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">Dashboard</a>
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">Explorer</a>
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">Assets</a>
+</div>
+<button class="flex items-center justify-center rounded-lg h-10 w-10 bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-all">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+</button>
+<button class="flex items-center justify-center rounded-lg h-10 w-10 bg-primary/10 text-primary border border-primary/20 lg:hidden">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border-2 border-primary" data-alt="User profile avatar with red accent border" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuARZhEHcn2dB7Gg2i50PKPXqZz8OasJxwiNmIK18asu6PTURqPhSxGE2OpUhwKhgLlKpVDiET7yt9ROiF6Qp9i5bXC79hUD0z935NLug3-NcWnMSQfbh2sBxj1c653K3BHXMMVtNime2ol0vuZpK1sjn8rTzyilTFafIi2VPhy436LF38CUzGETNYdWHovN-JukGF4YVE87wy06n6mU6sx40EE3coAbrDl4rFn4QLNLDxVlSvQ8t6e7zDN2fKyRp9BjS2UmXhzJ810");'></div>
+</div>
+</header>
+<div class="w-full bg-primary/10 border-b border-primary/30 py-3 px-6 lg:px-20">
+<div class="max-w-[1200px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">warning</span>
+<div>
+<p class="text-slate-900 dark:text-slate-100 text-sm font-bold">Network Warning</p>
+<p class="text-slate-600 dark:text-slate-400 text-xs">You must be connected to the Custom Subnet to interact with these assets.</p>
+</div>
+</div>
+<button class="bg-primary hover:bg-primary/90 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap">
+                    Switch Network
+                </button>
+</div>
+</div>
+<main class="flex-1 max-w-[1200px] mx-auto w-full px-6 py-10 lg:px-10 lg:py-16">
+<div class="flex flex-col lg:flex-row gap-12">
+<div class="flex flex-col flex-1 gap-8">
+<div class="flex flex-col gap-4">
+<div class="inline-flex items-center gap-2 bg-primary/20 text-primary px-3 py-1 rounded-full w-fit text-[10px] font-black uppercase tracking-widest">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+</span>
+                            Nexus Service Live
+                        </div>
+<h1 class="text-slate-900 dark:text-slate-100 text-5xl lg:text-7xl font-black leading-none tracking-tighter uppercase italic">
+                            NEXUS <span class="text-primary">Mock</span><br/>App-Chain
+                        </h1>
+<p class="text-slate-600 dark:text-slate-400 text-lg max-w-xl leading-relaxed">
+                            Experience the future of Galactic Raiders Web3 infrastructure. Deploy, scale, and manage your in-game identity with zero gas fees on our dedicated gaming subnet.
+                        </p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="bg-neutral-800/40 border border-primary/10 p-6 rounded-xl hover:border-primary/40 transition-all group">
+<span class="material-symbols-outlined text-primary mb-3 text-3xl group-hover:scale-110 transition-transform">speed</span>
+<h3 class="text-slate-100 font-bold mb-1">Instant Settlement</h3>
+<p class="text-slate-400 text-sm">Transactions confirm in under 1s with our specialized consensus engine.</p>
+</div>
+<div class="bg-neutral-800/40 border border-primary/10 p-6 rounded-xl hover:border-primary/40 transition-all group">
+<span class="material-symbols-outlined text-primary mb-3 text-3xl group-hover:scale-110 transition-transform">shield_moon</span>
+<h3 class="text-slate-100 font-bold mb-1">Secure Custody</h3>
+<p class="text-slate-400 text-sm">Enterprise-grade security for your legendary Galactic Raider assets.</p>
+</div>
+</div>
+</div>
+<div class="w-full lg:w-[400px]">
+<div class="relative bg-neutral-900 border-2 border-primary p-1 rounded-xl shadow-2xl shadow-primary/20 overflow-hidden">
+<div class="bg-primary/10 px-6 py-4 border-b border-primary/30 flex justify-between items-center">
+<h2 class="text-slate-100 font-black italic uppercase tracking-wider">Subscription Tiers</h2>
+<span class="material-symbols-outlined text-primary">verified</span>
+</div>
+<div class="p-8">
+<div class="flex items-center justify-between mb-6">
+<h3 class="text-slate-100 text-xl font-bold">Pro Gamer Pass</h3>
+<span class="bg-primary text-white text-[10px] font-black px-2.5 py-1 rounded uppercase">Most Popular</span>
+</div>
+<div class="mb-8">
+<div class="flex items-baseline gap-2">
+<span class="text-slate-100 text-6xl font-black italic tracking-tighter">100</span>
+<div class="flex flex-col">
+<span class="text-primary font-bold text-lg leading-none">mUSDC</span>
+<span class="text-slate-500 text-sm">/ month</span>
+</div>
+</div>
+</div>
+<div class="space-y-4 mb-10">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary text-xl">check_circle</span>
+<span class="text-slate-300 text-sm leading-tight">Full Access to Galactic Custom Subnet</span>
+</div>
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary text-xl">check_circle</span>
+<span class="text-slate-300 text-sm leading-tight">Zero Gas Fees for all Transactions</span>
+</div>
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary text-xl">check_circle</span>
+<span class="text-slate-300 text-sm leading-tight">Exclusive Season 4 In-game Assets</span>
+</div>
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary text-xl">check_circle</span>
+<span class="text-slate-300 text-sm leading-tight">Priority Matchmaking &amp; Tournament Entry</span>
+</div>
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary text-xl">check_circle</span>
+<span class="text-slate-300 text-sm leading-tight">Early Access to Galactic Raiders Beta</span>
+</div>
+</div>
+<button class="w-full bg-primary hover:bg-primary/90 text-white h-14 rounded-lg font-black uppercase tracking-widest transition-all shadow-lg shadow-primary/20 active:scale-95 flex items-center justify-center gap-2">
+<span>Subscribe with Nexus</span>
+<span class="material-symbols-outlined">double_arrow</span>
+</button>
+<p class="text-center text-slate-500 text-[10px] mt-6 uppercase tracking-widest font-bold">
+                                Powered by NEXUS Protocol
+                            </p>
+</div>
+<div class="absolute -bottom-10 -right-10 opacity-10">
+<span class="material-symbols-outlined text-[200px] text-primary">rocket</span>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-20 pt-10 border-t border-primary/10">
+<div class="flex flex-col md:flex-row justify-between items-center gap-6">
+<div class="flex gap-10">
+<div class="flex flex-col">
+<span class="text-primary font-black text-2xl">4.2M</span>
+<span class="text-slate-500 text-xs uppercase font-bold tracking-widest">Transactions</span>
+</div>
+<div class="flex flex-col">
+<span class="text-primary font-black text-2xl">12k</span>
+<span class="text-slate-500 text-xs uppercase font-bold tracking-widest">Active Raiders</span>
+</div>
+<div class="flex flex-col">
+<span class="text-primary font-black text-2xl">0.0s</span>
+<span class="text-slate-500 text-xs uppercase font-bold tracking-widest">Gas Cost</span>
+</div>
+</div>
+<div class="flex gap-4">
+<a class="w-10 h-10 rounded-lg bg-neutral-800 flex items-center justify-center hover:bg-primary/20 transition-colors" href="#">
+<span class="material-symbols-outlined text-slate-400">share</span>
+</a>
+<a class="w-10 h-10 rounded-lg bg-neutral-800 flex items-center justify-center hover:bg-primary/20 transition-colors" href="#">
+<span class="material-symbols-outlined text-slate-400">code</span>
+</a>
+</div>
+</div>
+</div>
+</main>
+<footer class="bg-background-light dark:bg-background-dark py-10 px-6 lg:px-20 border-t border-primary/10 mt-auto">
+<div class="max-w-[1200px] mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+<div class="flex items-center gap-2 grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all cursor-pointer">
+<span class="material-symbols-outlined text-primary">rocket_launch</span>
+<span class="text-sm font-black uppercase tracking-tighter">Galactic Raiders</span>
+</div>
+<div class="flex gap-8 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
+<a class="hover:text-primary" href="#">Legal</a>
+<a class="hover:text-primary" href="#">Support</a>
+<a class="hover:text-primary" href="#">Docs</a>
+<a class="hover:text-primary" href="#">Status</a>
+</div>
+<p class="text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em]">© 2024 Nexus Gaming Lab</p>
+</div>
+</footer>
+</div>
+</body></html>

@@ -1,0 +1,68 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #e74040;
+  --color-background-light: #f8f6f6;
+  --color-background-dark: #050505;
+  --color-dashboard-dark: #120a0a;
+  --color-admin-dark: #211111;
+  --color-neutral-dark: #1c1212;
+  --color-border-dark: #382929;
+  --color-terminal-accent: #382929;
+  --color-terminal-green: #4ade80;
+  --color-mock-bg: #120808;
+  --color-mock-neutral-800: #2a1a1a;
+  --color-mock-neutral-900: #1c1212;
+
+  --font-display: "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  --animate-spin-slow: spin 8s linear infinite;
+}
+
+/* === Landing Page Styles === */
+.glass {
+  background: rgba(231, 64, 64, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(231, 64, 64, 0.2);
+}
+
+.glow-border {
+  position: relative;
+}
+
+.glow-border::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  background: linear-gradient(45deg, transparent, rgba(231, 64, 64, 0.5), transparent);
+  z-index: -1;
+  border-radius: inherit;
+}
+
+.hero-gradient {
+  background: radial-gradient(circle at 50% 50%, rgba(231, 64, 64, 0.15) 0%, transparent 70%);
+}
+
+/* === Admin Console / Mock Service Styles === */
+.terminal-font {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.cyber-border {
+  border-left: 4px solid #e74040;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #382929;
+  border-radius: 10px;
+}
