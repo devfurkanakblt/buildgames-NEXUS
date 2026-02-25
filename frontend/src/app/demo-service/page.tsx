@@ -1,19 +1,44 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { useAccount, useConnect } from "wagmi";
+import { useAccount, useConnect, useReadContract, useWriteContract } from "wagmi";
+import { parseUnits } from "viem";
 import { injected } from "wagmi/connectors";
 import { toast, Toaster } from "react-hot-toast";
 import { useEcosystemStore } from "@/store/useEcosystemStore";
+import { NEXUS_BILLING_ADDRESS, NEXUS_BILLING_ABI, MOCK_USDC_ADDRESS, MOCK_USDC_ABI } from "@/lib/constants";
 
 export default function DemoServicePage() {
-    const { isConnected } = useAccount();
+    const { address, isConnected } = useAccount();
     const { connect } = useConnect();
     const [isSubscribing, setIsSubscribing] = useState(false);
+    const [isMinting, setIsMinting] = useState(false);
+    const [isClient, setIsClient] = useState(false);
 
-    const { activeSubscriptions, simulateTeleport, addSubscription } = useEcosystemStore();
-    const isSubscribed = activeSubscriptions.some(sub => sub.id === 'NX-GR-100');
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
+
+    const { activeSubscriptions } = useEcosystemStore();
+
+    // 1. Check if user is already actively subscribed on-chain
+    const { data: subscriptionData, refetch: refetchSubscription } = useReadContract({
+        address: NEXUS_BILLING_ADDRESS,
+        abi: NEXUS_BILLING_ABI,
+        functionName: 'subscriptions',
+        args: address ? [address, BigInt(100)] : undefined, // serviceId = 100
+        query: {
+            enabled: !!address,
+        }
+    });
+
+    // We know 'isActive' is the 5th item in the returned tuple from the struct 
+    // (userAddress, serviceId, costPerMonth, nextPaymentDueDate, isActive)
+    const isOnchainSubscribed = subscriptionData ? (subscriptionData as any[])[4] : false;
+
+    // 2. Wagmi hook for writing to NexusBilling
+    const { writeContractAsync, isPending: isTxPending } = useWriteContract();
 
     const handleSubscribe = async () => {
         if (!isConnected) {
@@ -21,22 +46,65 @@ export default function DemoServicePage() {
             connect({ connector: injected() });
             return;
         }
-        setIsSubscribing(true);
-        toast.loading("Communicating with Subnet Billing Contract...", { id: "sub-toast" });
-        await simulateTeleport(() => {
-            addSubscription({
-                id: 'NX-GR-100',
-                name: 'Galactic Raiders Subnet',
-                tier: 'PRO GAMER PASS',
-                price: 100.00,
-                status: 'ACTIVE'
+
+        try {
+            const txPromise = writeContractAsync({
+                address: NEXUS_BILLING_ADDRESS,
+                abi: NEXUS_BILLING_ABI,
+                functionName: 'registerSubscription',
+                args: [
+                    address,
+                    BigInt(100), // serviceId
+                    parseUnits("100", 6) // costPerMonth (100 mUSDC)
+                ],
             });
-        });
-        setIsSubscribing(false);
-        toast.dismiss("sub-toast");
-        toast.success("Successfully registered on Galactic Raiders Subnet! 🚀", {
-            style: { background: '#120808', color: '#4ade80', border: '1px solid #4ade80' }
-        });
+
+            toast.promise(txPromise, {
+                loading: 'Communicating with Subnet Billing Contract via Wallet...',
+                success: 'Transaction submitted! Waiting for confirmation...',
+                error: 'Transaction failed or denied.',
+            }, {
+                style: { background: '#120808', color: '#4ade80', border: '1px solid #4ade80' }
+            });
+
+            await txPromise;
+            refetchSubscription(); // Refetch the status once the transaction is sent
+
+        } catch (error) {
+            console.error("Subscription flow error:", error);
+        }
+    };
+
+    const handleFaucet = async () => {
+        if (!isConnected) {
+            toast.error("Please connect your wallet first");
+            connect({ connector: injected() });
+            return;
+        }
+
+        try {
+            setIsMinting(true);
+            const txPromise = writeContractAsync({
+                address: MOCK_USDC_ADDRESS,
+                abi: MOCK_USDC_ABI,
+                functionName: 'mint',
+                args: [address, parseUnits("1000", 6)], // Mint 1,000 mUSDC
+            });
+
+            toast.promise(txPromise, {
+                loading: 'Requesting 1,000 mUSDC from Faucet...',
+                success: 'Tokens minted successfully! Checkout Dashboard.',
+                error: 'Faucet request failed.',
+            }, {
+                style: { background: '#120808', color: '#4ade80', border: '1px solid #4ade80' }
+            });
+
+            await txPromise;
+        } catch (error) {
+            console.error("Faucet error:", error);
+        } finally {
+            setIsMinting(false);
+        }
     };
 
     return (
@@ -61,9 +129,9 @@ export default function DemoServicePage() {
                         <a className="text-sm font-medium hover:text-primary transition-colors" href="#">Assets</a>
                     </div>
                     <button
-                        onClick={() => !isConnected && connect({ connector: injected() })}
+                        onClick={() => (!isClient || !isConnected) && connect({ connector: injected() })}
                         className="flex items-center justify-center rounded-lg h-10 w-10 bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-all"
-                        title={isConnected ? "Connected" : "Connect Wallet"}>
+                        title={(isClient && isConnected) ? "Connected" : "Connect Wallet"}>
                         <span className="material-symbols-outlined">account_balance_wallet</span>
                     </button>
                     <button className="flex items-center justify-center rounded-lg h-10 w-10 bg-primary/10 text-primary border border-primary/20 lg:hidden">
@@ -124,7 +192,7 @@ export default function DemoServicePage() {
                         {/* Stats */}
                         <div className="mt-12 pt-10 border-t border-primary/10">
                             <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-                                <div className="flex gap-10">
+                                <div className="flex gap-10 items-center">
                                     <div className="flex flex-col">
                                         <span className="text-primary font-black text-2xl">4.2M</span>
                                         <span className="text-slate-500 text-xs uppercase font-bold tracking-widest">Transactions</span>
@@ -133,10 +201,13 @@ export default function DemoServicePage() {
                                         <span className="text-primary font-black text-2xl">12k</span>
                                         <span className="text-slate-500 text-xs uppercase font-bold tracking-widest">Active Raiders</span>
                                     </div>
-                                    <div className="flex flex-col">
-                                        <span className="text-primary font-black text-2xl">0.0s</span>
-                                        <span className="text-slate-500 text-xs uppercase font-bold tracking-widest">Gas Cost</span>
-                                    </div>
+                                    <button
+                                        onClick={handleFaucet}
+                                        disabled={isMinting}
+                                        className="h-10 px-4 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50">
+                                        <span className="material-symbols-outlined text-[16px]">water_drop</span>
+                                        {isMinting ? "Minting..." : "Faucet: 1,000 mUSDC"}
+                                    </button>
                                 </div>
                                 <div className="flex gap-4">
                                     <a className="w-10 h-10 rounded-lg bg-mock-neutral-800 flex items-center justify-center hover:bg-primary/20 transition-colors" href="#">
@@ -186,7 +257,7 @@ export default function DemoServicePage() {
                                     ))}
                                 </div>
 
-                                {isSubscribed ? (
+                                {isOnchainSubscribed ? (
                                     <div className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-emerald-500/10 text-emerald-400 rounded-lg border border-emerald-500/20 font-bold">
                                         <span className="material-symbols-outlined">check_circle</span>
                                         Active Subscription
@@ -194,9 +265,9 @@ export default function DemoServicePage() {
                                 ) : (
                                     <button
                                         onClick={handleSubscribe}
-                                        disabled={isSubscribing}
+                                        disabled={isTxPending || isSubscribing}
                                         className="w-full bg-primary hover:bg-primary/90 text-white h-14 rounded-lg font-black uppercase tracking-widest transition-all shadow-lg shadow-primary/20 active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                                        {isSubscribing ? (
+                                        {isTxPending ? (
                                             <span className="flex items-center gap-2">
                                                 <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>

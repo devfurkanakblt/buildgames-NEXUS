@@ -5,21 +5,74 @@ import Link from "next/link";
 import {
     useAccount,
     useConnect,
-    useBalance
+    useBalance,
+    useReadContract,
+    useWriteContract,
+    useWaitForTransactionReceipt
 } from "wagmi";
-import { formatUnits } from "viem";
+import { formatUnits, parseUnits } from "viem";
 import { injected } from "wagmi/connectors";
 import { toast, Toaster } from "react-hot-toast";
 import { useEcosystemStore } from "@/store/useEcosystemStore";
+import { MOCK_USDC_ADDRESS, MOCK_USDC_ABI, NEXUS_VAULT_ADDRESS, NEXUS_BILLING_ADDRESS, NEXUS_BILLING_ABI } from "@/lib/constants";
 
 export default function DashboardPage() {
     const { address, isConnected } = useAccount();
     const { data: balanceData } = useBalance({ address });
     const { connect } = useConnect();
     const [isClient, setIsClient] = useState(false);
-    const [isApproving, setIsApproving] = useState(false);
 
-    const { mUsdcBalance, vaultApproved, setVaultApproved, activeSubscriptions, simulateTeleport } = useEcosystemStore();
+    // Wagmi hooks for writing to MockUSDC and NexusBilling
+    const { writeContractAsync, isPending: isTxPending } = useWriteContract();
+
+    // Fetch actual MockUSDC Balance
+    const { data: mUsdcBalanceRaw, refetch: refetchBalance } = useReadContract({
+        address: MOCK_USDC_ADDRESS,
+        abi: MOCK_USDC_ABI,
+        functionName: 'balanceOf',
+        args: address ? [address] : undefined,
+        query: {
+            enabled: !!address,
+        }
+    });
+    const mUsdcBalance = mUsdcBalanceRaw ? Number(formatUnits(mUsdcBalanceRaw as bigint, 6)) : 0;
+
+    // Fetch Vault Allowance
+    const { data: allowanceRaw, refetch: refetchAllowance } = useReadContract({
+        address: MOCK_USDC_ADDRESS,
+        abi: MOCK_USDC_ABI,
+        functionName: 'allowance',
+        args: address ? [address, NEXUS_VAULT_ADDRESS] : undefined,
+        query: {
+            enabled: !!address,
+        }
+    });
+
+    const vaultApproved = allowanceRaw && (allowanceRaw as bigint) >= parseUnits("100", 6);
+
+    // Fetch Subscription Status
+    const { data: subscriptionData, refetch: refetchSubscription } = useReadContract({
+        address: NEXUS_BILLING_ADDRESS,
+        abi: NEXUS_BILLING_ABI,
+        functionName: 'subscriptions',
+        args: address ? [address, BigInt(100)] : undefined,
+        query: {
+            enabled: !!address,
+        }
+    });
+
+    const isSubscribedRaw = subscriptionData ? (subscriptionData as any[])[4] : false;
+
+    // Build the dynamic array for the UI table
+    const activeSubscriptions = isSubscribedRaw ? [
+        {
+            id: 'NX-GR-100',
+            name: 'Galactic Raiders Subnet',
+            tier: 'PRO GAMER PASS',
+            price: 100.00,
+            status: 'ACTIVE'
+        }
+    ] : [];
 
     // eslint-disable-next-line
     useEffect(() => { setIsClient(true); }, []);
@@ -28,19 +81,55 @@ export default function DashboardPage() {
         if (!isConnected) { toast.error("Please connect your wallet first."); return; }
         if (vaultApproved) { toast("Vault is already approved.", { icon: '✅' }); return; }
 
-        setIsApproving(true);
-        const approvePromise = simulateTeleport(() => {
-            setVaultApproved(true);
-            setIsApproving(false);
-        });
+        try {
+            const txPromise = writeContractAsync({
+                address: MOCK_USDC_ADDRESS,
+                abi: MOCK_USDC_ABI,
+                functionName: 'approve',
+                args: [NEXUS_VAULT_ADDRESS, parseUnits("1000000", 6)], // Approve max for demo
+            });
 
-        toast.promise(approvePromise, {
-            loading: 'Initiating cross-chain message to C-Chain...',
-            success: 'Vault Authorization Confirmed!',
-            error: 'Failed to authorize.',
-        }, {
-            style: { background: '#120a0a', color: '#4ade80', border: '1px solid #4ade80' },
-        });
+            toast.promise(txPromise, {
+                loading: 'Requesting Vault Authorization via Wallet...',
+                success: 'Transaction submitted! Waiting for confirmation...',
+                error: 'Authorization request failed or denied.',
+            }, {
+                style: { background: '#120a0a', color: '#4ade80', border: '1px solid #4ade80' },
+            });
+
+            const txHash = await txPromise;
+            refetchAllowance(); // Refetch allowance to trigger state update
+
+        } catch (error) {
+            console.error("Approval flow error:", error);
+        }
+    };
+
+    const handleCancelSubscription = async (serviceId: number) => {
+        if (!isConnected) return;
+
+        try {
+            const txPromise = writeContractAsync({
+                address: NEXUS_BILLING_ADDRESS,
+                abi: NEXUS_BILLING_ABI,
+                functionName: 'cancelSubscription',
+                args: [address, BigInt(serviceId)],
+            });
+
+            toast.promise(txPromise, {
+                loading: 'Requesting Subscription Cancellation...',
+                success: 'Cancellation confirmed!',
+                error: 'Failed to cancel subscription.',
+            }, {
+                style: { background: '#120a0a', color: '#4ade80', border: '1px solid #4ade80' },
+            });
+
+            await txPromise;
+            refetchSubscription(); // Update UI
+
+        } catch (error) {
+            console.error("Cancellation error:", error);
+        }
     };
 
     return (
@@ -66,7 +155,7 @@ export default function DashboardPage() {
                             <Link className="text-slate-400 hover:text-white text-sm font-medium uppercase tracking-widest transition-colors" href="/demo-service">Subnets</Link>
                             <a className="text-slate-400 hover:text-white text-sm font-medium uppercase tracking-widest transition-colors" href="#">Vault</a>
                         </nav>
-                        {!isConnected ? (
+                        {(!isClient || !isConnected) ? (
                             <button
                                 onClick={() => connect({ connector: injected() })}
                                 className="flex min-w-[140px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-5 bg-primary text-white text-sm font-bold leading-normal tracking-wide shadow-[0_0_15px_rgba(231,64,64,0.4)] hover:shadow-[0_0_25px_rgba(231,64,64,0.6)] transition-all">
@@ -111,7 +200,7 @@ export default function DashboardPage() {
                                         <button
                                             onClick={() => connect({ connector: injected() })}
                                             className="w-full md:w-auto flex min-w-[120px] cursor-pointer items-center justify-center rounded-lg h-10 px-6 bg-primary/10 border border-primary text-primary text-sm font-bold uppercase tracking-widest hover:bg-primary hover:text-white transition-all">
-                                            {isConnected ? "Refresh Balance" : "Connect Wallet"}
+                                            {(isClient && isConnected) ? "Refresh Balance" : "Connect Wallet"}
                                         </button>
                                     </div>
                                 </div>
@@ -141,9 +230,9 @@ export default function DashboardPage() {
                                 </div>
                                 <button
                                     onClick={handleApprove}
-                                    disabled={isApproving || !isConnected}
+                                    disabled={isTxPending || !isConnected}
                                     className="w-full flex cursor-pointer items-center justify-center rounded-lg h-12 px-4 bg-primary text-white text-sm font-bold uppercase tracking-widest shadow-lg hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-                                    {isApproving ? "Processing..." : "Update Vault Settings"}
+                                    {isTxPending ? "Processing..." : "Update Vault Settings"}
                                 </button>
                             </div>
                         </div>
@@ -195,8 +284,11 @@ export default function DashboardPage() {
                                                 </span>
                                             </td>
                                             <td className="px-6 py-5 text-right">
-                                                <button className="text-slate-400 hover:text-primary transition-colors">
-                                                    <span className="material-symbols-outlined">more_horiz</span>
+                                                <button
+                                                    onClick={() => handleCancelSubscription(100)}
+                                                    disabled={isTxPending}
+                                                    className="px-3 py-1.5 rounded bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500 hover:text-white transition-all text-xs font-bold uppercase disabled:opacity-50">
+                                                    Cancel
                                                 </button>
                                             </td>
                                         </tr>
@@ -221,7 +313,7 @@ export default function DashboardPage() {
                 <footer className="border-t border-border-dark p-8 bg-dashboard-dark text-center mt-auto">
                     <p className="text-slate-500 text-xs font-mono uppercase tracking-widest">NEXUS COMMAND v4.0.2 © 2024 Terminal Protocol Inc.</p>
                 </footer>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }
